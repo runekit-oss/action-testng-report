@@ -1,0 +1,29 @@
+name: 'TestNG Report Action'
+description: 'Parse TestNG XML results, generate reports, and annotate failed tests in GitHub Actions.'
+branding:
+  icon: 'check-circle'
+  color: 'blue'
+inputs:
+  report_paths:
+    description: 'Glob expression for TestNG XML report paths.'
+    required: true
+    default: '**/testng-results.xml'
+  summary_report:
+    description: 'Generate summary report (true/false)'
+    required: false
+    default: 'true'
+  detailed_report:
+    description: 'Generate detailed report (true/false)'
+    required: false
+    default: 'false'
+  check_name:
+    description: 'Check name to use when creating a check run.'
+    required: false
+    default: 'TestNG Test Report'
+  fail_if_empty:
+    description: 'Fail if there are no test results found.'
+    required: false
+    default: 'true'
+runs:
+  using: 'node20'
+  main: 'dist/index.js'
