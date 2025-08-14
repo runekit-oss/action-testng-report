@@ -5,6 +5,7 @@
 // Summary Report Generator for TestNG results
 
 import { TestNGSuiteResult } from "./testng-parser";
+import { formatDuration } from "./utils";
 
 export interface PackageStats {
   packageName: string;
@@ -22,15 +23,6 @@ export interface SummaryStats {
   skipped: number;
   durationMs: number;
   packageStats: PackageStats[];
-}
-
-function formatDuration(durationMs: number): string {
-  const hours = Math.floor(durationMs / (1000 * 60 * 60));
-  const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
-  const seconds = Math.floor((durationMs % (1000 * 60)) / 1000);
-  const ms = durationMs % 1000;
-
-  return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}:${ms.toString().padStart(3, "0")}`;
 }
 
 function generatePackageStats(suites: TestNGSuiteResult[]): PackageStats[] {

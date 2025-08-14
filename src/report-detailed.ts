@@ -5,6 +5,7 @@
 // Detailed Report Generator for TestNG results
 
 import { TestNGSuiteResult, TestNGTestCase } from "./testng-parser";
+import { formatDuration } from "./utils";
 
 interface PackageGroup {
   packageName: string;
@@ -116,21 +117,29 @@ export function generateDetailedMarkdown(suites: TestNGSuiteResult[]): string {
 
   const packageGroups = groupTestsByPackageAndClass(suites);
 
-  // Sort packages alphabetically
-  const sortedPackages = Array.from(packageGroups.entries()).sort((a, b) =>
-    a[0].localeCompare(b[0]),
-  );
+  // Sort packages by most failed tests first, then alphabetically
+  const sortedPackages = Array.from(packageGroups.entries()).sort((a, b) => {
+    if (b[1].failed !== a[1].failed) {
+      return b[1].failed - a[1].failed;
+    }
+    return a[0].localeCompare(b[0]);
+  });
 
   for (const [packageName, packageGroup] of sortedPackages) {
-    md += `<details>\n<summary><h3>📦 ${packageName} (${packageGroup.durationMs}ms - ${packageGroup.failed} failed, ${packageGroup.skipped} skipped, ${packageGroup.passed} passed)</h3></summary>\n\n`;
+    md += `<details>\n<summary><h3>📦 ${packageName} (${formatDuration(packageGroup.durationMs)} - ${packageGroup.failed} failed, ${packageGroup.skipped} skipped, ${packageGroup.passed} passed)</h3></summary>\n\n`;
 
-    // Sort classes alphabetically
+    // Sort classes by most failed tests first, then alphabetically
     const sortedClasses = Array.from(packageGroup.classes.entries()).sort(
-      (a, b) => a[0].localeCompare(b[0]),
+      (a, b) => {
+        if (b[1].failed !== a[1].failed) {
+          return b[1].failed - a[1].failed;
+        }
+        return a[0].localeCompare(b[0]);
+      },
     );
 
     for (const [className, classGroup] of sortedClasses) {
-      md += `<details>\n<summary><h4>🔷 ${className} (${classGroup.durationMs}ms - ${classGroup.failed} failed, ${classGroup.skipped} skipped, ${classGroup.passed} passed)</h4></summary>\n\n`;
+      md += `<details>\n<summary><h4>📄 ${className} (${formatDuration(classGroup.durationMs)} - ${classGroup.failed} failed, ${classGroup.skipped} skipped, ${classGroup.passed} passed)</h4></summary>\n\n`;
 
       // Sort tests alphabetically
       const sortedTests = classGroup.tests.sort((a, b) =>
@@ -143,7 +152,7 @@ export function generateDetailedMarkdown(suites: TestNGSuiteResult[]): string {
 
         // Only use collapsible sections for failed tests
         if (test.status === "FAIL") {
-          md += `<details>\n<summary><h5>${statusEmoji} ${test.name} (${test.durationMs}ms) - <span style="color:${statusColor}; font-weight:bold;">${test.status}</span></h5></summary>\n\n`;
+          md += `<details>\n<summary><h5>${statusEmoji} ${test.name} (${formatDuration(test.durationMs)}) - <span style=\"color:${statusColor}; font-weight:bold;\">${test.status}</span></h5></summary>\n\n`;
 
           if (test.failureMessage) {
             md += `**Message:**\n\n\`\`\`\n${test.failureMessage}\n\`\`\`\n\n`;
@@ -169,7 +178,7 @@ export function generateDetailedMarkdown(suites: TestNGSuiteResult[]): string {
           md += `</details>\n`;
         } else {
           // For PASS and SKIP tests, just show a simple line without collapsible section
-          md += `${statusEmoji} <strong>${test.name}</strong> (${test.durationMs}ms) - <span style="color:${statusColor}; font-weight:bold;">${test.status}</span>`;
+          md += `${statusEmoji} <strong>${test.name}</strong> (${formatDuration(test.durationMs)}) - <span style=\"color:${statusColor}; font-weight:bold;\">${test.status}</span>`;
 
           if (test.groups && test.groups.length > 0) {
             md += ` - Groups: ${test.groups.join(", ")}`;

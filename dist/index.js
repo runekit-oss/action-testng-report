@@ -27996,7 +27996,7 @@ run();
 /***/ }),
 
 /***/ 774:
-/***/ ((__unused_webpack_module, exports) => {
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
@@ -28007,6 +28007,7 @@ run();
 // Detailed Report Generator for TestNG results
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.generateDetailedMarkdown = generateDetailedMarkdown;
+const utils_1 = __nccwpck_require__(1798);
 function groupTestsByPackageAndClass(suites) {
     const packageMap = new Map();
     for (const suite of suites) {
@@ -28083,14 +28084,24 @@ function getStatusEmoji(status) {
 function generateDetailedMarkdown(suites) {
     let md = `## Detailed TestNG Report\n\n`;
     const packageGroups = groupTestsByPackageAndClass(suites);
-    // Sort packages alphabetically
-    const sortedPackages = Array.from(packageGroups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+    // Sort packages by most failed tests first, then alphabetically
+    const sortedPackages = Array.from(packageGroups.entries()).sort((a, b) => {
+        if (b[1].failed !== a[1].failed) {
+            return b[1].failed - a[1].failed;
+        }
+        return a[0].localeCompare(b[0]);
+    });
     for (const [packageName, packageGroup] of sortedPackages) {
-        md += `<details>\n<summary><h3>📦 ${packageName} (${packageGroup.durationMs}ms - ${packageGroup.failed} failed, ${packageGroup.skipped} skipped, ${packageGroup.passed} passed)</h3></summary>\n\n`;
-        // Sort classes alphabetically
-        const sortedClasses = Array.from(packageGroup.classes.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+        md += `<details>\n<summary><h3>📦 ${packageName} (${(0, utils_1.formatDuration)(packageGroup.durationMs)} - ${packageGroup.failed} failed, ${packageGroup.skipped} skipped, ${packageGroup.passed} passed)</h3></summary>\n\n`;
+        // Sort classes by most failed tests first, then alphabetically
+        const sortedClasses = Array.from(packageGroup.classes.entries()).sort((a, b) => {
+            if (b[1].failed !== a[1].failed) {
+                return b[1].failed - a[1].failed;
+            }
+            return a[0].localeCompare(b[0]);
+        });
         for (const [className, classGroup] of sortedClasses) {
-            md += `<details>\n<summary><h4>🔷 ${className} (${classGroup.durationMs}ms - ${classGroup.failed} failed, ${classGroup.skipped} skipped, ${classGroup.passed} passed)</h4></summary>\n\n`;
+            md += `<details>\n<summary><h4>📄 ${className} (${(0, utils_1.formatDuration)(classGroup.durationMs)} - ${classGroup.failed} failed, ${classGroup.skipped} skipped, ${classGroup.passed} passed)</h4></summary>\n\n`;
             // Sort tests alphabetically
             const sortedTests = classGroup.tests.sort((a, b) => a.name.localeCompare(b.name));
             for (const test of sortedTests) {
@@ -28098,7 +28109,7 @@ function generateDetailedMarkdown(suites) {
                 const statusEmoji = getStatusEmoji(test.status);
                 // Only use collapsible sections for failed tests
                 if (test.status === "FAIL") {
-                    md += `<details>\n<summary><h5>${statusEmoji} ${test.name} (${test.durationMs}ms) - <span style="color:${statusColor}; font-weight:bold;">${test.status}</span></h5></summary>\n\n`;
+                    md += `<details>\n<summary><h5>${statusEmoji} ${test.name} (${(0, utils_1.formatDuration)(test.durationMs)}) - <span style=\"color:${statusColor}; font-weight:bold;\">${test.status}</span></h5></summary>\n\n`;
                     if (test.failureMessage) {
                         md += `**Message:**\n\n\`\`\`\n${test.failureMessage}\n\`\`\`\n\n`;
                     }
@@ -28120,7 +28131,7 @@ function generateDetailedMarkdown(suites) {
                 }
                 else {
                     // For PASS and SKIP tests, just show a simple line without collapsible section
-                    md += `${statusEmoji} <strong>${test.name}</strong> (${test.durationMs}ms) - <span style="color:${statusColor}; font-weight:bold;">${test.status}</span>`;
+                    md += `${statusEmoji} <strong>${test.name}</strong> (${(0, utils_1.formatDuration)(test.durationMs)}) - <span style=\"color:${statusColor}; font-weight:bold;\">${test.status}</span>`;
                     if (test.groups && test.groups.length > 0) {
                         md += ` - Groups: ${test.groups.join(", ")}`;
                     }
@@ -28138,7 +28149,7 @@ function generateDetailedMarkdown(suites) {
 /***/ }),
 
 /***/ 8112:
-/***/ ((__unused_webpack_module, exports) => {
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
@@ -28150,13 +28161,7 @@ function generateDetailedMarkdown(suites) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.generateSummaryStats = generateSummaryStats;
 exports.generateSummaryMarkdown = generateSummaryMarkdown;
-function formatDuration(durationMs) {
-    const hours = Math.floor(durationMs / (1000 * 60 * 60));
-    const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((durationMs % (1000 * 60)) / 1000);
-    const ms = durationMs % 1000;
-    return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}:${ms.toString().padStart(3, "0")}`;
-}
+const utils_1 = __nccwpck_require__(1798);
 function generatePackageStats(suites) {
     const packageMap = new Map();
     for (const suite of suites) {
@@ -28211,7 +28216,7 @@ function generateSummaryMarkdown(stats) {
         markdown += `| **Package** | **Duration** | **Fail** | **Skip** | **Pass** | **Total** |\n`;
         markdown += `|-------------|--------------|----------|----------|----------|----------|\n`;
         for (const pkg of stats.packageStats) {
-            const duration = formatDuration(pkg.durationMs);
+            const duration = (0, utils_1.formatDuration)(pkg.durationMs);
             markdown += `| ${pkg.packageName} | ${duration} | ${pkg.failed} | ${pkg.skipped} | ${pkg.passed} | ${pkg.total} |\n`;
         }
         markdown += `\n`;
@@ -28290,6 +28295,36 @@ function parseTestNGResult(xml) {
             testCases,
         };
     });
+}
+
+
+/***/ }),
+
+/***/ 1798:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+// Shared utilities for TestNG reports
+// Copyright 2025 Anoop Garlapati and RuneKit Contributors
+// Licensed under the Apache License, Version 2.0
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.formatDuration = formatDuration;
+/**
+ * Format milliseconds as HH:mm:ss:SSS
+ */
+function formatDuration(ms) {
+    const hours = Math.floor(ms / 3600000);
+    const minutes = Math.floor((ms % 3600000) / 60000);
+    const seconds = Math.floor((ms % 60000) / 1000);
+    const millis = ms % 1000;
+    return (String(hours).padStart(2, "0") +
+        ":" +
+        String(minutes).padStart(2, "0") +
+        ":" +
+        String(seconds).padStart(2, "0") +
+        ":" +
+        String(millis).padStart(3, "0"));
 }
 
 
