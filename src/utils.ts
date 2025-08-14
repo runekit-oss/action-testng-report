@@ -1,6 +1,8 @@
+/**
+ * Copyright 2025 Anoop Garlapati and RuneKit Contributors
+ * Licensed under the Apache License, Version 2.0 – see LICENSE in the root of this repository.
+ */
 // Shared utilities for TestNG reports
-// Copyright 2025 Anoop Garlapati and RuneKit Contributors
-// Licensed under the Apache License, Version 2.0
 
 /**
  * Format milliseconds as HH:mm:ss:SSS

@@ -43,6 +43,7 @@ async function run() {
       const summary = generateSummaryMarkdown(stats);
       core.summary.addRaw(summary);
     }
+    // Build detailed report content
     if (config.detailedReport) {
       const detailed = generateDetailedMarkdown(allSuites);
       core.summary.addRaw(detailed);

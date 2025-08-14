@@ -27856,7 +27856,9 @@ function createAnnotationsForFailedTests(suites) {
                     endLine: 1,
                     annotationLevel: "failure",
                     message: message +
-                        (test.stackTrace ? `\nStacktrace:\n${test.stackTrace}` : ""),
+                        (test.stackTrace
+                            ? `\n::group::Stacktrace\n${test.stackTrace}\n::endgroup::`
+                            : ""),
                 };
                 // Use core.error to create a GitHub annotation
                 core.error(annotationProps.message, annotationProps);
@@ -27972,6 +27974,7 @@ async function run() {
             const summary = (0, report_summary_1.generateSummaryMarkdown)(stats);
             core.summary.addRaw(summary);
         }
+        // Build detailed report content
         if (config.detailedReport) {
             const detailed = (0, report_detailed_1.generateDetailedMarkdown)(allSuites);
             core.summary.addRaw(detailed);
@@ -28209,7 +28212,7 @@ function generateSummaryStats(suites) {
     return { total, passed, failed, skipped, durationMs, packageStats };
 }
 function generateSummaryMarkdown(stats) {
-    let markdown = `## TestNG Summary\n\n` +
+    let markdown = `## TestNG Report Summary\n\n` +
         `**Total:** ${stats.total}  |  **Passed:** ${stats.passed}  |  **Failed:** ${stats.failed}  |  **Skipped:** ${stats.skipped}  |  **Duration:** ${stats.durationMs} ms\n\n`;
     if (stats.packageStats.length > 0) {
         markdown += `### Package Statistics\n\n`;
@@ -28236,7 +28239,7 @@ function generateSummaryMarkdown(stats) {
  * Copyright 2025 Anoop Garlapati and RuneKit Contributors
  * Licensed under the Apache License, Version 2.0 – see LICENSE in the root of this repository.
  */
-// TestNG XML result parser for GitHub Actions TestNG Report Generator
+// XML result parser for parsing TestNG result files
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.parseTestNGResult = parseTestNGResult;
 const fast_xml_parser_1 = __nccwpck_require__(9741);
@@ -28305,9 +28308,11 @@ function parseTestNGResult(xml) {
 
 "use strict";
 
+/**
+ * Copyright 2025 Anoop Garlapati and RuneKit Contributors
+ * Licensed under the Apache License, Version 2.0 – see LICENSE in the root of this repository.
+ */
 // Shared utilities for TestNG reports
-// Copyright 2025 Anoop Garlapati and RuneKit Contributors
-// Licensed under the Apache License, Version 2.0
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.formatDuration = formatDuration;
 /**

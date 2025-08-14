@@ -2,7 +2,7 @@
  * Copyright 2025 Anoop Garlapati and RuneKit Contributors
  * Licensed under the Apache License, Version 2.0 – see LICENSE in the root of this repository.
  */
-// TestNG XML result parser for GitHub Actions TestNG Report Generator
+// XML result parser for parsing TestNG result files
 
 import { XMLParser } from "fast-xml-parser";
 

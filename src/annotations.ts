@@ -23,7 +23,9 @@ export function createAnnotationsForFailedTests(
           annotationLevel: "failure",
           message:
             message +
-            (test.stackTrace ? `\nStacktrace:\n${test.stackTrace}` : ""),
+            (test.stackTrace
+              ? `\n::group::Stacktrace\n${test.stackTrace}\n::endgroup::`
+              : ""),
         };
         // Use core.error to create a GitHub annotation
         core.error(annotationProps.message as string, annotationProps);

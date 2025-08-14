@@ -1,7 +1,7 @@
 name: 'TestNG Report Action'
 description: 'Parse TestNG XML results, generate reports, and annotate failed tests in GitHub Actions.'
 branding:
-  icon: 'check-circle'
+  icon: 'bar-chart'
   color: 'blue'
 inputs:
   report_paths:
