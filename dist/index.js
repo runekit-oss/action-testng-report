@@ -28211,7 +28211,7 @@ function generateSummaryStats(suites) {
 }
 function generateSummaryMarkdown(stats) {
     let markdown = `## TestNG Report Summary\n\n` +
-        `**Total:** ${stats.total}  |  **Passed:** ${stats.passed}  |  **Failed:** ${stats.failed}  |  **Skipped:** ${stats.skipped}  |  **Duration:** ${stats.durationMs} ms\n\n`;
+        `**Total:** ${stats.total}  |  **Passed:** ${stats.passed}  |  **Failed:** ${stats.failed}  |  **Skipped:** ${stats.skipped}  |  **Duration:** ${(0, utils_1.formatDuration)(stats.durationMs)}\n\n`;
     if (stats.packageStats.length > 0) {
         markdown += `### Package Statistics\n\n`;
         markdown += `| **Package** | **Duration** | **Fail** | **Skip** | **Pass** | **Total** |\n`;

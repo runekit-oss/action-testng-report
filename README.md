@@ -50,20 +50,15 @@ jobs:
 
 ## Example Output
 
-**Summary Report (Markdown):**
+**Summary Report:**
 
-```
-## TestNG Summary
+![TestNG Report Screenshot](images/report-screenshot.png)
 
-**Total:** 42  |  **Passed:** 40  |  **Failed:** 2  |  **Skipped:** 0  |  **Duration:** 1234 ms
-
-**Slowest Tests:**
-- com.example.FooTest.shouldFail: 500 ms
-- com.example.BarTest.shouldFail: 400 ms
-```
 
 **Annotations:**
-- Failed tests are annotated in the GitHub Actions UI with error messages and stack traces.
+
+![TestNG Annotations Screenshot](images/annotations-screenshot.png)
+
 
 ---
 

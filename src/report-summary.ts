@@ -86,7 +86,7 @@ export function generateSummaryStats(
 export function generateSummaryMarkdown(stats: SummaryStats): string {
   let markdown =
     `## TestNG Report Summary\n\n` +
-    `**Total:** ${stats.total}  |  **Passed:** ${stats.passed}  |  **Failed:** ${stats.failed}  |  **Skipped:** ${stats.skipped}  |  **Duration:** ${stats.durationMs} ms\n\n`;
+    `**Total:** ${stats.total}  |  **Passed:** ${stats.passed}  |  **Failed:** ${stats.failed}  |  **Skipped:** ${stats.skipped}  |  **Duration:** ${formatDuration(stats.durationMs)}\n\n`;
 
   if (stats.packageStats.length > 0) {
     markdown += `### Package Statistics\n\n`;
