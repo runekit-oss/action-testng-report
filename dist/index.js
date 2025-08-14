@@ -27856,9 +27856,7 @@ function createAnnotationsForFailedTests(suites) {
                     endLine: 1,
                     annotationLevel: "failure",
                     message: message +
-                        (test.stackTrace
-                            ? `\n::group::Stacktrace\n${test.stackTrace}\n::endgroup::`
-                            : ""),
+                        (test.stackTrace ? `\nStacktrace\n${test.stackTrace}\n` : ""),
                 };
                 // Use core.error to create a GitHub annotation
                 core.error(annotationProps.message, annotationProps);
