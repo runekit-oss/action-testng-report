@@ -1,7 +1,7 @@
 {
   "name": "action-testng-report",
-  "version": "0.1.0",
-  "description": "GitHub Action to generate TestNG test report",
+  "version": "1.0.0",
+  "description": "GitHub Action to generate TestNG report",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
@@ -16,7 +16,7 @@
     "report",
     "ci"
   ],
-  "author": "",
+  "author": "Anoop Garlapati and RuneKit Contributors",
   "license": "Apache-2.0",
   "dependencies": {
     "@actions/core": "^1.10.0",
