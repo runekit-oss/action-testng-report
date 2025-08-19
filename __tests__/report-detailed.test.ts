@@ -121,6 +121,44 @@ describe("generateDetailedMarkdown", () => {
     expect(aIdx).toBeLessThan(cIdx);
   });
 
+  it("sorts tests by status (FAIL, SKIP, PASS), then alphabetically", () => {
+    const suites: TestNGSuiteResult[] = [
+      {
+        suiteName: "s1",
+        durationMs: 100,
+        testCases: [
+          { name: "test1", className: "pkg.A", durationMs: 10, status: "PASS" },
+          { name: "test2", className: "pkg.A", durationMs: 10, status: "FAIL" },
+          { name: "test3", className: "pkg.A", durationMs: 10, status: "SKIP" },
+          { name: "test4", className: "pkg.A", durationMs: 10, status: "PASS" },
+          { name: "test5", className: "pkg.A", durationMs: 10, status: "FAIL" },
+        ],
+      },
+    ];
+    const md = generateDetailedMarkdown(suites);
+    // FAIL: test2, test5
+    // SKIP: test3
+    // PASS: test1, test4
+    const test1Idx = md.indexOf("test1");
+    const test2Idx = md.indexOf("test2");
+    const test3Idx = md.indexOf("test3");
+    const test4Idx = md.indexOf("test4");
+    const test5Idx = md.indexOf("test5");
+
+    // Fails first
+    expect(test2Idx).toBeLessThan(test3Idx);
+    expect(test5Idx).toBeLessThan(test3Idx);
+
+    // Then skips
+    expect(test3Idx).toBeLessThan(test1Idx);
+    expect(test3Idx).toBeLessThan(test4Idx);
+
+    // Then passes
+    // Alphabetical within status
+    expect(test2Idx).toBeLessThan(test5Idx);
+    expect(test1Idx).toBeLessThan(test4Idx);
+  });
+
   it("renders detailed markdown for suites and tests", () => {
     const suites: TestNGSuiteResult[] = [
       {
