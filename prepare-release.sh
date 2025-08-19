@@ -40,13 +40,14 @@ fi
 echo "${CYAN}${BOLD}--- Bumping version ($BUMP_TYPE) ---${NC}"
 if [ "$DRY_RUN" == "false" ]; then
   npm version $BUMP_TYPE -m "Release v%s"
+  echo "Pushing version commit to main branch..."
+  git push origin HEAD:main
 else
   echo "Skipping npm version in dry run."
 fi
 
 echo "${CYAN}${BOLD}--- Installing Dependencies ---${NC}"
 npm install
-
 
 echo "${CYAN}${BOLD}--- Linting (Fixing) ---${NC}"
 npm run lint:fix
