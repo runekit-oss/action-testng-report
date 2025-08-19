@@ -84,6 +84,43 @@ describe("generateDetailedMarkdown", () => {
     expect(bIdx).toBeLessThan(aIdx);
     expect(aIdx).toBeLessThan(cIdx);
   });
+
+  it("sorts classes by failed, then skipped, then passed", () => {
+    const suites: TestNGSuiteResult[] = [
+      {
+        suiteName: "s1",
+        durationMs: 100,
+        testCases: [
+          // Class A: 1 fail, 1 skip, 2 passes
+          { name: "a1", className: "pkg.A", durationMs: 10, status: "FAIL" },
+          { name: "a2", className: "pkg.A", durationMs: 10, status: "SKIP" },
+          { name: "a3", className: "pkg.A", durationMs: 10, status: "PASS" },
+          { name: "a4", className: "pkg.A", durationMs: 10, status: "PASS" },
+          // Class B: 1 fail, 2 skips, 1 pass
+          { name: "b1", className: "pkg.B", durationMs: 10, status: "FAIL" },
+          { name: "b2", className: "pkg.B", durationMs: 10, status: "SKIP" },
+          { name: "b3", className: "pkg.B", durationMs: 10, status: "SKIP" },
+          { name: "b4", className: "pkg.B", durationMs: 10, status: "PASS" },
+          // Class C: 1 fail, 1 skip, 1 pass
+          { name: "c1", className: "pkg.C", durationMs: 10, status: "FAIL" },
+          { name: "c2", className: "pkg.C", durationMs: 10, status: "SKIP" },
+          { name: "c3", className: "pkg.C", durationMs: 10, status: "PASS" },
+        ],
+      },
+    ];
+    const md = generateDetailedMarkdown(suites);
+    // All classes are in pkg.
+    // All have 1 fail.
+    // B has 2 skips. A and C have 1 skip.
+    // A has 2 passes, C has 1 pass.
+    // So order should be B, A, C
+    const aIdx = md.indexOf("📄 A");
+    const bIdx = md.indexOf("📄 B");
+    const cIdx = md.indexOf("📄 C");
+    expect(bIdx).toBeLessThan(aIdx);
+    expect(aIdx).toBeLessThan(cIdx);
+  });
+
   it("renders detailed markdown for suites and tests", () => {
     const suites: TestNGSuiteResult[] = [
       {
