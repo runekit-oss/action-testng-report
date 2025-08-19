@@ -6,7 +6,7 @@ import { generateDetailedMarkdown } from "../src/report-detailed";
 import { TestNGSuiteResult } from "../src/testng-parser";
 
 describe("generateDetailedMarkdown", () => {
-  it("sorts packages by most failed tests first, then alphabetically", () => {
+  it("sorts packages by most failed, then skipped, then passed tests first, then alphabetically", () => {
     const suites: TestNGSuiteResult[] = [
       {
         suiteName: "s1",
@@ -26,6 +26,41 @@ describe("generateDetailedMarkdown", () => {
     const pkg3Idx = md.indexOf("📦 pkg3");
     expect(pkg2Idx).toBeLessThan(pkg1Idx);
     expect(pkg1Idx).toBeLessThan(pkg3Idx);
+  });
+
+  it("sorts packages by failed, then skipped, then passed", () => {
+    const suites: TestNGSuiteResult[] = [
+      {
+        suiteName: "s1",
+        durationMs: 100,
+        testCases: [
+          // pkg1: 1 fail, 1 skip, 1 pass
+          { name: "a", className: "pkg1.A", durationMs: 10, status: "FAIL" },
+          { name: "b", className: "pkg1.A", durationMs: 10, status: "SKIP" },
+          { name: "c", className: "pkg1.A", durationMs: 10, status: "PASS" },
+          // pkg2: 1 fail, 2 skips, 1 pass
+          { name: "d", className: "pkg2.B", durationMs: 10, status: "FAIL" },
+          { name: "e", className: "pkg2.B", durationMs: 10, status: "SKIP" },
+          { name: "f", className: "pkg2.B", durationMs: 10, status: "SKIP" },
+          { name: "g", className: "pkg2.B", durationMs: 10, status: "PASS" },
+          // pkg3: 1 fail, 1 skip, 2 pass
+          { name: "h", className: "pkg3.C", durationMs: 10, status: "FAIL" },
+          { name: "i", className: "pkg3.C", durationMs: 10, status: "SKIP" },
+          { name: "j", className: "pkg3.C", durationMs: 10, status: "PASS" },
+          { name: "k", className: "pkg3.C", durationMs: 10, status: "PASS" },
+        ],
+      },
+    ];
+    const md = generateDetailedMarkdown(suites);
+    // All have 1 fail.
+    // pkg2 has 2 skips, pkg1 and pkg3 have 1 skip.
+    // pkg3 has 2 passes, pkg1 has 1 pass.
+    // So order should be pkg2, pkg3, pkg1
+    const pkg1Idx = md.indexOf("📦 pkg1");
+    const pkg2Idx = md.indexOf("📦 pkg2");
+    const pkg3Idx = md.indexOf("📦 pkg3");
+    expect(pkg2Idx).toBeLessThan(pkg3Idx);
+    expect(pkg3Idx).toBeLessThan(pkg1Idx);
   });
 
   it("sorts classes within a package by most failed tests first, then alphabetically", () => {

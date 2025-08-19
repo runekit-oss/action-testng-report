@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "description": "GitHub Action to generate TestNG report",
   "main": "dist/index.js",
+  "type": "module",
   "scripts": {
     "build": "tsc",
-    "test": "jest",
+  "test": "jest --config jest.config.mjs",
     "lint": "eslint src __tests__ --ext .ts",
     "lint:fix": "eslint src __tests__ --ext .ts --fix",
     "bundle": "ncc build src/index.ts -o dist"

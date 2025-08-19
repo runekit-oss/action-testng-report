@@ -117,10 +117,16 @@ export function generateDetailedMarkdown(suites: TestNGSuiteResult[]): string {
 
   const packageGroups = groupTestsByPackageAndClass(suites);
 
-  // Sort packages by most failed tests first, then alphabetically
+  // Sort packages by most failed, then skipped, then passed tests first, then alphabetically
   const sortedPackages = Array.from(packageGroups.entries()).sort((a, b) => {
     if (b[1].failed !== a[1].failed) {
       return b[1].failed - a[1].failed;
+    }
+    if (b[1].skipped !== a[1].skipped) {
+      return b[1].skipped - a[1].skipped;
+    }
+    if (b[1].passed !== a[1].passed) {
+      return b[1].passed - a[1].passed;
     }
     return a[0].localeCompare(b[0]);
   });
