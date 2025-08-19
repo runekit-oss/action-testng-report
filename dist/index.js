@@ -28001,10 +28001,16 @@ function generateDetailedMarkdown(suites) {
     });
     for (const [packageName, packageGroup] of sortedPackages) {
         md += `<details>\n<summary><h3>📦 ${packageName} (${(0, utils_1.formatDuration)(packageGroup.durationMs)} - ${packageGroup.failed} failed, ${packageGroup.skipped} skipped, ${packageGroup.passed} passed)</h3></summary>\n\n`;
-        // Sort classes by most failed tests first, then alphabetically
+        // Sort classes by most failed, then skipped, then passed tests first, then alphabetically
         const sortedClasses = Array.from(packageGroup.classes.entries()).sort((a, b) => {
             if (b[1].failed !== a[1].failed) {
                 return b[1].failed - a[1].failed;
+            }
+            if (b[1].skipped !== a[1].skipped) {
+                return b[1].skipped - a[1].skipped;
+            }
+            if (b[1].passed !== a[1].passed) {
+                return b[1].passed - a[1].passed;
             }
             return a[0].localeCompare(b[0]);
         });
