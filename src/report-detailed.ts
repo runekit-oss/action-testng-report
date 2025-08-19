@@ -153,10 +153,20 @@ export function generateDetailedMarkdown(suites: TestNGSuiteResult[]): string {
     for (const [className, classGroup] of sortedClasses) {
       md += `<details>\n<summary><h4>📄 ${className} (${formatDuration(classGroup.durationMs)} - ${classGroup.failed} failed, ${classGroup.skipped} skipped, ${classGroup.passed} passed)</h4></summary>\n\n`;
 
-      // Sort tests alphabetically
-      const sortedTests = classGroup.tests.sort((a, b) =>
-        a.name.localeCompare(b.name),
-      );
+      // Sort tests by status (FAIL, SKIP, PASS), then alphabetically
+      const sortedTests = classGroup.tests.sort((a, b) => {
+        const statusOrder: { [key: string]: number } = {
+          FAIL: 1,
+          SKIP: 2,
+          PASS: 3,
+        };
+        const aStatus = statusOrder[a.status] || 4;
+        const bStatus = statusOrder[b.status] || 4;
+        if (aStatus !== bStatus) {
+          return aStatus - bStatus;
+        }
+        return a.name.localeCompare(b.name);
+      });
 
       for (const test of sortedTests) {
         const statusColor = getStatusColor(test.status);
