@@ -28167,17 +28167,33 @@ const fast_xml_parser_1 = __nccwpck_require__(9741);
 function parseTestNGResult(xml) {
     const parser = new fast_xml_parser_1.XMLParser({ ignoreAttributes: false });
     const json = parser.parse(xml);
+    // Defensive check: ensure testng-results exists
+    if (!json["testng-results"] || !json["testng-results"].suite) {
+        return [];
+    }
     const suites = Array.isArray(json["testng-results"]?.suite)
         ? json["testng-results"].suite
         : [json["testng-results"].suite];
-    return suites.map((suite) => {
+    return suites
+        .filter((suite) => suite) // Filter out undefined/null suites
+        .map((suite) => {
         const suiteName = suite["@_name"] || "Unnamed Suite";
         const durationMs = Number(suite["@_duration-ms"] || 0);
         const testCases = [];
+        // Defensive check: ensure suite.test exists
+        if (!suite.test) {
+            return { suiteName, durationMs, testCases };
+        }
         const tests = Array.isArray(suite.test) ? suite.test : [suite.test];
         tests.forEach((test) => {
+            // Defensive check: ensure test exists and has class property
+            if (!test || !test.class)
+                return;
             const classes = Array.isArray(test.class) ? test.class : [test.class];
             classes.forEach((clazz) => {
+                // Defensive check: ensure clazz exists
+                if (!clazz)
+                    return;
                 const className = clazz["@_name"] || "UnnamedClass";
                 const methods = Array.isArray(clazz["test-method"])
                     ? clazz["test-method"]
