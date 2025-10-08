@@ -251,4 +251,78 @@ describe("parseTestNGResult", () => {
     expect(suites[0].testCases[1].stackTrace).toBe("stacktraceA2");
     expect(suites[1].testCases[0].status).toBe("PASS");
   });
+
+  it("handles empty XML gracefully", () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>`;
+    const suites = parseTestNGResult(xml);
+    expect(suites).toEqual([]);
+  });
+
+  it("handles XML without testng-results", () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?><root></root>`;
+    const suites = parseTestNGResult(xml);
+    expect(suites).toEqual([]);
+  });
+
+  it("handles testng-results without suite", () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?><testng-results></testng-results>`;
+    const suites = parseTestNGResult(xml);
+    expect(suites).toEqual([]);
+  });
+
+  it("handles suite without test element", () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+      <testng-results>
+        <suite name="EmptySuite" duration-ms="0"></suite>
+      </testng-results>`;
+    const suites = parseTestNGResult(xml);
+    expect(suites).toHaveLength(1);
+    expect(suites[0].suiteName).toBe("EmptySuite");
+    expect(suites[0].testCases).toEqual([]);
+  });
+
+  it("handles test without class element", () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+      <testng-results>
+        <suite name="SuiteNoClass" duration-ms="0">
+          <test name="TestNoClass"></test>
+        </suite>
+      </testng-results>`;
+    const suites = parseTestNGResult(xml);
+    expect(suites).toHaveLength(1);
+    expect(suites[0].suiteName).toBe("SuiteNoClass");
+    expect(suites[0].testCases).toEqual([]);
+  });
+
+  it("handles class without test-method element", () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+      <testng-results>
+        <suite name="SuiteNoMethod" duration-ms="0">
+          <test name="TestNoMethod">
+            <class name="com.example.EmptyClass"></class>
+          </test>
+        </suite>
+      </testng-results>`;
+    const suites = parseTestNGResult(xml);
+    expect(suites).toHaveLength(1);
+    expect(suites[0].suiteName).toBe("SuiteNoMethod");
+    expect(suites[0].testCases).toEqual([]);
+  });
+
+  it("handles undefined suite in array", () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+      <testng-results>
+        <suite name="ValidSuite" duration-ms="100">
+          <test name="Test1">
+            <class name="com.example.TestClass">
+              <test-method name="testMethod1" status="PASS" duration-ms="50"/>
+            </class>
+          </test>
+        </suite>
+      </testng-results>`;
+    const suites = parseTestNGResult(xml);
+    expect(suites).toHaveLength(1);
+    expect(suites[0].suiteName).toBe("ValidSuite");
+    expect(suites[0].testCases).toHaveLength(1);
+  });
 });
