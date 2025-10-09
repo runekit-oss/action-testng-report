@@ -38,7 +38,9 @@ export function parseTestNGResult(xml: string): TestNGSuiteResult[] {
     : [json["testng-results"].suite];
 
   return suites
-    .filter((suite: Record<string, unknown>) => suite) // Filter out undefined/null suites
+    .filter(
+      (suite: Record<string, unknown>) => suite && typeof suite === "object",
+    ) // Filter out undefined/null suites
     .map((suite: Record<string, unknown>) => {
       const suiteName = (suite["@_name"] as string) || "Unnamed Suite";
       const durationMs = Number((suite["@_duration-ms"] as string) || 0);

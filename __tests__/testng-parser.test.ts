@@ -103,6 +103,20 @@ const multiModuleXml = `<?xml version="1.0" encoding="UTF-8"?>
   </suite>
 </testng-results>`;
 
+const invalidSuiteXml = `<?xml version="1.0" encoding="UTF-8"?>
+<testng-results>
+  <suite name="ValidSuite">
+    <test name="Test1">
+      <class name="com.example.TestClass">
+        <test-method name="testMethod1" status="PASS" duration-ms="100"/>
+      </class>
+    </test>
+  </suite>
+  <suite>
+    <!-- This suite is invalid because it's not a real object when parsed -->
+  </suite>
+</testng-results>`;
+
 describe("parseTestNGResult", () => {
   it("handles single test/class/method not in array", () => {
     const xml = `<?xml version='1.0' encoding='UTF-8'?>
@@ -295,6 +309,149 @@ describe("parseTestNGResult", () => {
   });
 
   it("handles class without test-method element", () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+      <testng-results>
+        <suite name="SuiteNoMethod" duration-ms="0">
+          <test name="TestNoMethod">
+            <class name="com.example.EmptyClass"></class>
+          </test>
+        </suite>
+      </testng-results>`;
+    const suites = parseTestNGResult(xml);
+    expect(suites).toHaveLength(1);
+    expect(suites[0].suiteName).toBe("SuiteNoMethod");
+    expect(suites[0].testCases).toEqual([]);
+  });
+
+  it("handles undefined suite in array", () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+      <testng-results>
+        <suite name="ValidSuite" duration-ms="100">
+          <test name="Test1">
+            <class name="com.example.TestClass">
+              <test-method name="testMethod1" status="PASS" duration-ms="50"/>
+            </class>
+          </test>
+        </suite>
+      </testng-results>`;
+    const suites = parseTestNGResult(xml);
+    expect(suites).toHaveLength(1);
+    expect(suites[0].suiteName).toBe("ValidSuite");
+    expect(suites[0].testCases).toHaveLength(1);
+  });
+
+  it("should handle invalid suite entries gracefully", () => {
+    const result = parseTestNGResult(invalidSuiteXml);
+    expect(result.length).toBe(1);
+    expect(result[0].suiteName).toBe("ValidSuite");
+    expect(result[0].testCases.length).toBe(1);
+    expect(result[0].testCases[0].name).toBe("testMethod1");
+  });
+
+  it("should handle a TestNG report with no test cases", () => {
+    const emptyTestXml = `<?xml version="1.0" encoding="UTF-8"?>
+<testng-results ignored="1" total="1" passed="0" failed="0" skipped="0">
+  <reporter-output>
+  </reporter-output>
+  <suite started-at="2025-10-08T14:39:51Z" name="Surefire suite" finished-at="2025-10-08T14:39:51Z" duration-ms="2">
+    <groups>
+    </groups>
+    <test started-at="2025-10-08T14:39:51Z" name="Surefire test" finished-at="2025-10-08T14:39:51Z" duration-ms="2">
+    </test> <!-- Surefire test -->
+  </suite> <!-- Surefire suite -->
+</testng-results>`;
+    const result = parseTestNGResult(emptyTestXml);
+    expect(result.length).toBe(1);
+    expect(result[0].suiteName).toBe("Surefire suite");
+    expect(result[0].testCases.length).toBe(0);
+  });
+
+  it("should parse a TestNG XML with a failed test", () => {
+    const result = parseTestNGResult(failXml);
+    expect(result.length).toBe(1);
+    expect(result[0].suiteName).toBe("SuiteFail");
+    expect(result[0].testCases.length).toBe(1);
+    expect(result[0].testCases[0].status).toBe("FAIL");
+  });
+
+  it("should parse a TestNG XML with a skipped test", () => {
+    const result = parseTestNGResult(skipXml);
+    expect(result.length).toBe(1);
+    expect(result[0].suiteName).toBe("SuiteSkip");
+    expect(result[0].testCases.length).toBe(1);
+    expect(result[0].testCases[0].status).toBe("SKIP");
+  });
+
+  it("should parse a TestNG XML with multiple suites and tests", () => {
+    const result = parseTestNGResult(multiSuiteXml);
+    expect(result.length).toBe(2);
+    expect(result[0].suiteName).toBe("SuiteA");
+    expect(result[1].suiteName).toBe("SuiteB");
+    expect(result[0].testCases.length).toBe(2);
+    expect(result[1].testCases.length).toBe(1);
+  });
+
+  it("should parse a TestNG XML with groups", () => {
+    const result = parseTestNGResult(groupXml);
+    expect(result.length).toBe(1);
+    expect(result[0].suiteName).toBe("SuiteGroup");
+    expect(result[0].testCases.length).toBe(1);
+    expect(result[0].testCases[0].groups).toEqual(["group1", "group2"]);
+  });
+
+  it("should parse a multi-module Maven project TestNG XML", () => {
+    const result = parseTestNGResult(multiModuleXml);
+    expect(result.length).toBe(2);
+    expect(result[0].suiteName).toBe("module-a");
+    expect(result[1].suiteName).toBe("module-b");
+    expect(result[0].testCases.length).toBe(2);
+    expect(result[1].testCases.length).toBe(1);
+  });
+
+  it("should handle empty XML gracefully", () => {
+    const result = parseTestNGResult(`<?xml version="1.0" encoding="UTF-8"?>`);
+    expect(result).toEqual([]);
+  });
+
+  it("should handle XML without testng-results", () => {
+    const result = parseTestNGResult(
+      `<?xml version="1.0" encoding="UTF-8"?><root></root>`,
+    );
+    expect(result).toEqual([]);
+  });
+
+  it("should handle testng-results without suite", () => {
+    const result = parseTestNGResult(
+      `<?xml version="1.0" encoding="UTF-8"?><testng-results></testng-results>`,
+    );
+    expect(result).toEqual([]);
+  });
+
+  it("should handle suite without test element", () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+      <testng-results>
+        <suite name="EmptySuite" duration-ms="0"></suite>
+      </testng-results>`;
+    const suites = parseTestNGResult(xml);
+    expect(suites).toHaveLength(1);
+    expect(suites[0].suiteName).toBe("EmptySuite");
+    expect(suites[0].testCases).toEqual([]);
+  });
+
+  it("should handle test without class element", () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+      <testng-results>
+        <suite name="SuiteNoClass" duration-ms="0">
+          <test name="TestNoClass"></test>
+        </suite>
+      </testng-results>`;
+    const suites = parseTestNGResult(xml);
+    expect(suites).toHaveLength(1);
+    expect(suites[0].suiteName).toBe("SuiteNoClass");
+    expect(suites[0].testCases).toEqual([]);
+  });
+
+  it("should handle class without test-method element", () => {
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
       <testng-results>
         <suite name="SuiteNoMethod" duration-ms="0">

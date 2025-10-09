@@ -28175,7 +28175,7 @@ function parseTestNGResult(xml) {
         ? json["testng-results"].suite
         : [json["testng-results"].suite];
     return suites
-        .filter((suite) => suite) // Filter out undefined/null suites
+        .filter((suite) => suite && typeof suite === "object") // Filter out undefined/null suites
         .map((suite) => {
         const suiteName = suite["@_name"] || "Unnamed Suite";
         const durationMs = Number(suite["@_duration-ms"] || 0);
