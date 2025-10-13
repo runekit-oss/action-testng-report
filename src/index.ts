@@ -10,7 +10,10 @@ import {
   generateSummaryStats,
   generateSummaryMarkdown,
 } from "./report-summary";
-import { generateDetailedMarkdown } from "./report-detailed";
+import {
+  generateDetailedMarkdown,
+  generateDetailedMarkdownFailedOnly,
+} from "./report-detailed";
 import * as fs from "fs";
 import * as glob from "glob";
 
@@ -38,15 +41,48 @@ async function run() {
     createAnnotationsForFailedTests(allSuites);
 
     // Build summary content
+    let summaryContent = "";
+    let detailedContent = "";
+
     if (config.summaryReport) {
       const stats = generateSummaryStats(allSuites);
-      const summary = generateSummaryMarkdown(stats);
-      core.summary.addRaw(summary);
+      summaryContent = generateSummaryMarkdown(stats);
     }
+
     // Build detailed report content
     if (config.detailedReport) {
-      const detailed = generateDetailedMarkdown(allSuites);
-      core.summary.addRaw(detailed);
+      detailedContent = generateDetailedMarkdown(allSuites);
+    }
+
+    // Check if the combined output exceeds GitHub's 1024KB limit
+    const MAX_SIZE_BYTES = 1024 * 1024; // 1024KB
+    let combinedContent = summaryContent + detailedContent;
+    const contentSizeBytes = Buffer.byteLength(combinedContent, "utf8");
+
+    if (contentSizeBytes > MAX_SIZE_BYTES && config.detailedReport) {
+      core.info(
+        `Report size (${contentSizeBytes} bytes) exceeds GitHub limit (${MAX_SIZE_BYTES} bytes). Truncating detailed report to show only failed tests.`,
+      );
+      // Regenerate detailed report with only failed tests
+      detailedContent = generateDetailedMarkdownFailedOnly(allSuites);
+      combinedContent = summaryContent + detailedContent;
+
+      const newSizeBytes = Buffer.byteLength(combinedContent, "utf8");
+      core.info(`Truncated report size: ${newSizeBytes} bytes`);
+
+      if (newSizeBytes > MAX_SIZE_BYTES) {
+        core.warning(
+          `Even after truncation, report size (${newSizeBytes} bytes) still exceeds GitHub limit. Some content may be cut off.`,
+        );
+      }
+    }
+
+    // Add content to summary
+    if (summaryContent) {
+      core.summary.addRaw(summaryContent);
+    }
+    if (detailedContent) {
+      core.summary.addRaw(detailedContent);
     }
 
     // Write summary only once at the end

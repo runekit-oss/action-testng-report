@@ -2,7 +2,10 @@
  * Copyright 2025 Anoop Garlapati and RuneKit Contributors
  * Licensed under the Apache License, Version 2.0 – see LICENSE in the root of this repository.
  */
-import { generateDetailedMarkdown } from "../src/report-detailed";
+import {
+  generateDetailedMarkdown,
+  generateDetailedMarkdownFailedOnly,
+} from "../src/report-detailed";
 import { TestNGSuiteResult } from "../src/testng-parser";
 
 describe("generateDetailedMarkdown", () => {
@@ -251,5 +254,160 @@ describe("generateDetailedMarkdown", () => {
     ];
     const md = generateDetailedMarkdown(suites);
     expect(md).toContain("line1\nline2\nline3");
+  });
+});
+
+describe("generateDetailedMarkdownFailedOnly", () => {
+  it("includes note about truncation due to size restrictions", () => {
+    const suites: TestNGSuiteResult[] = [
+      {
+        suiteName: "s1",
+        durationMs: 100,
+        testCases: [
+          {
+            name: "test1",
+            className: "pkg1.A",
+            durationMs: 10,
+            status: "FAIL",
+          },
+        ],
+      },
+    ];
+    const md = generateDetailedMarkdownFailedOnly(suites);
+    expect(md).toContain(
+      "Only failed test details are displayed due to GitHub size restrictions",
+    );
+  });
+
+  it("excludes passed tests from detailed report", () => {
+    const suites: TestNGSuiteResult[] = [
+      {
+        suiteName: "s1",
+        durationMs: 100,
+        testCases: [
+          {
+            name: "failedTest",
+            className: "pkg1.A",
+            durationMs: 10,
+            status: "FAIL",
+          },
+          {
+            name: "passedTest",
+            className: "pkg1.A",
+            durationMs: 10,
+            status: "PASS",
+          },
+        ],
+      },
+    ];
+    const md = generateDetailedMarkdownFailedOnly(suites);
+    expect(md).toContain("failedTest");
+    expect(md).not.toContain("passedTest");
+  });
+
+  it("excludes skipped tests from detailed report", () => {
+    const suites: TestNGSuiteResult[] = [
+      {
+        suiteName: "s1",
+        durationMs: 100,
+        testCases: [
+          {
+            name: "failedTest",
+            className: "pkg1.A",
+            durationMs: 10,
+            status: "FAIL",
+          },
+          {
+            name: "skippedTest",
+            className: "pkg1.A",
+            durationMs: 10,
+            status: "SKIP",
+          },
+        ],
+      },
+    ];
+    const md = generateDetailedMarkdownFailedOnly(suites);
+    expect(md).toContain("failedTest");
+    expect(md).not.toContain("skippedTest");
+  });
+
+  it("excludes packages with no failures", () => {
+    const suites: TestNGSuiteResult[] = [
+      {
+        suiteName: "s1",
+        durationMs: 100,
+        testCases: [
+          {
+            name: "failedTest",
+            className: "pkg1.A",
+            durationMs: 10,
+            status: "FAIL",
+          },
+          {
+            name: "passedTest",
+            className: "pkg2.B",
+            durationMs: 10,
+            status: "PASS",
+          },
+        ],
+      },
+    ];
+    const md = generateDetailedMarkdownFailedOnly(suites);
+    expect(md).toContain("📦 pkg1");
+    expect(md).not.toContain("📦 pkg2");
+  });
+
+  it("excludes classes with no failures", () => {
+    const suites: TestNGSuiteResult[] = [
+      {
+        suiteName: "s1",
+        durationMs: 100,
+        testCases: [
+          {
+            name: "failedTest",
+            className: "pkg1.A",
+            durationMs: 10,
+            status: "FAIL",
+          },
+          {
+            name: "passedTest",
+            className: "pkg1.B",
+            durationMs: 10,
+            status: "PASS",
+          },
+        ],
+      },
+    ];
+    const md = generateDetailedMarkdownFailedOnly(suites);
+    expect(md).toContain("📄 A");
+    expect(md).not.toContain("📄 B");
+  });
+
+  it("includes all failure details for failed tests", () => {
+    const suites: TestNGSuiteResult[] = [
+      {
+        suiteName: "s1",
+        durationMs: 100,
+        testCases: [
+          {
+            name: "failedTest",
+            className: "pkg1.A",
+            durationMs: 10,
+            status: "FAIL",
+            failureMessage: "Assertion failed",
+            expected: "true",
+            actual: "false",
+            stackTrace: "at TestClass.test(TestClass.java:10)",
+            groups: ["smoke"],
+          },
+        ],
+      },
+    ];
+    const md = generateDetailedMarkdownFailedOnly(suites);
+    expect(md).toContain("Assertion failed");
+    expect(md).toContain("true");
+    expect(md).toContain("false");
+    expect(md).toContain("at TestClass.test(TestClass.java:10)");
+    expect(md).toContain("**Groups:** smoke");
   });
 });
