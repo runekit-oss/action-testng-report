@@ -27869,15 +27869,37 @@ async function run() {
         core.info(`Check name: ${config.checkName}`);
         (0, annotations_1.createAnnotationsForFailedTests)(allSuites);
         // Build summary content
+        let summaryContent = "";
+        let detailedContent = "";
         if (config.summaryReport) {
             const stats = (0, report_summary_1.generateSummaryStats)(allSuites);
-            const summary = (0, report_summary_1.generateSummaryMarkdown)(stats);
-            core.summary.addRaw(summary);
+            summaryContent = (0, report_summary_1.generateSummaryMarkdown)(stats);
         }
         // Build detailed report content
         if (config.detailedReport) {
-            const detailed = (0, report_detailed_1.generateDetailedMarkdown)(allSuites);
-            core.summary.addRaw(detailed);
+            detailedContent = (0, report_detailed_1.generateDetailedMarkdown)(allSuites);
+        }
+        // Check if the combined output exceeds GitHub's 1024KB limit
+        const MAX_SIZE_BYTES = 1024 * 1024; // 1024KB
+        let combinedContent = summaryContent + detailedContent;
+        const contentSizeBytes = Buffer.byteLength(combinedContent, "utf8");
+        if (contentSizeBytes > MAX_SIZE_BYTES && config.detailedReport) {
+            core.info(`Report size (${contentSizeBytes} bytes) exceeds GitHub limit (${MAX_SIZE_BYTES} bytes). Truncating detailed report to show only failed tests.`);
+            // Regenerate detailed report with only failed tests
+            detailedContent = (0, report_detailed_1.generateDetailedMarkdownFailedOnly)(allSuites);
+            combinedContent = summaryContent + detailedContent;
+            const newSizeBytes = Buffer.byteLength(combinedContent, "utf8");
+            core.info(`Truncated report size: ${newSizeBytes} bytes`);
+            if (newSizeBytes > MAX_SIZE_BYTES) {
+                core.warning(`Even after truncation, report size (${newSizeBytes} bytes) still exceeds GitHub limit. Some content may be cut off.`);
+            }
+        }
+        // Add content to summary
+        if (summaryContent) {
+            core.summary.addRaw(summaryContent);
+        }
+        if (detailedContent) {
+            core.summary.addRaw(detailedContent);
         }
         // Write summary only once at the end
         if (config.summaryReport || config.detailedReport) {
@@ -27909,6 +27931,7 @@ run();
 // Detailed Report Generator for TestNG results
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.generateDetailedMarkdown = generateDetailedMarkdown;
+exports.generateDetailedMarkdownFailedOnly = generateDetailedMarkdownFailedOnly;
 const utils_1 = __nccwpck_require__(1798);
 function groupTestsByPackageAndClass(suites) {
     const packageMap = new Map();
@@ -28063,6 +28086,86 @@ function generateDetailedMarkdown(suites) {
                     }
                     md += `\n\n`;
                 }
+            }
+            md += `</details>\n\n`;
+        }
+        md += `</details>\n\n`;
+    }
+    return md;
+}
+function generateDetailedMarkdownFailedOnly(suites) {
+    let md = `## Detailed TestNG Report\n\n`;
+    md += `> **Note:** Only failed test details are displayed due to GitHub size restrictions. Summary table above shows all test results.\n\n`;
+    const packageGroups = groupTestsByPackageAndClass(suites);
+    // Check if there are any failed tests at all
+    const totalFailures = Array.from(packageGroups.values()).reduce((sum, pkg) => sum + pkg.failed, 0);
+    if (totalFailures === 0) {
+        md += `✅ **No tests have failed.**\n\n`;
+        return md;
+    }
+    // Sort packages by most failed first
+    const sortedPackages = Array.from(packageGroups.entries()).sort((a, b) => {
+        if (b[1].failed !== a[1].failed) {
+            return b[1].failed - a[1].failed;
+        }
+        if (b[1].skipped !== a[1].skipped) {
+            return b[1].skipped - a[1].skipped;
+        }
+        if (b[1].passed !== a[1].passed) {
+            return b[1].passed - a[1].passed;
+        }
+        return a[0].localeCompare(b[0]);
+    });
+    for (const [packageName, packageGroup] of sortedPackages) {
+        // Skip packages with no failures
+        if (packageGroup.failed === 0) {
+            continue;
+        }
+        md += `<details>\n<summary><h3>📦 ${packageName} (${(0, utils_1.formatDuration)(packageGroup.durationMs)} - ${packageGroup.failed} failed, ${packageGroup.skipped} skipped, ${packageGroup.passed} passed)</h3></summary>\n\n`;
+        // Sort classes by most failed first
+        const sortedClasses = Array.from(packageGroup.classes.entries()).sort((a, b) => {
+            if (b[1].failed !== a[1].failed) {
+                return b[1].failed - a[1].failed;
+            }
+            if (b[1].skipped !== a[1].skipped) {
+                return b[1].skipped - a[1].skipped;
+            }
+            if (b[1].passed !== a[1].passed) {
+                return b[1].passed - a[1].passed;
+            }
+            return a[0].localeCompare(b[0]);
+        });
+        for (const [className, classGroup] of sortedClasses) {
+            // Skip classes with no failures
+            if (classGroup.failed === 0) {
+                continue;
+            }
+            md += `<details>\n<summary><h4>📄 ${className} (${(0, utils_1.formatDuration)(classGroup.durationMs)} - ${classGroup.failed} failed, ${classGroup.skipped} skipped, ${classGroup.passed} passed)</h4></summary>\n\n`;
+            // Only include failed tests
+            const failedTests = classGroup.tests.filter((test) => test.status === "FAIL");
+            const sortedTests = failedTests.sort((a, b) => a.name.localeCompare(b.name));
+            for (const test of sortedTests) {
+                const statusColor = getStatusColor(test.status);
+                const statusEmoji = getStatusEmoji(test.status);
+                md += `<details>\n<summary><h5>${statusEmoji} ${test.name} (${(0, utils_1.formatDuration)(test.durationMs)}) - <span style=\"color:${statusColor}; font-weight:bold;\">${test.status}</span></h5></summary>\n\n`;
+                if (test.failureMessage) {
+                    md += `**Message:**\n\n\`\`\`\n${test.failureMessage}\n\`\`\`\n\n`;
+                }
+                if (test.expected !== undefined || test.actual !== undefined) {
+                    if (test.expected !== undefined) {
+                        md += `**Expected:**\n\n\`\`\`\n${test.expected}\n\`\`\`\n\n`;
+                    }
+                    if (test.actual !== undefined) {
+                        md += `**Actual:**\n\n\`\`\`\n${test.actual}\n\`\`\`\n\n`;
+                    }
+                }
+                if (test.stackTrace) {
+                    md += `**Stack Trace:**\n\n\`\`\`java\n${test.stackTrace}\n\`\`\`\n\n`;
+                }
+                if (test.groups && test.groups.length > 0) {
+                    md += `**Groups:** ${test.groups.join(", ")}\n\n`;
+                }
+                md += `</details>\n`;
             }
             md += `</details>\n\n`;
         }

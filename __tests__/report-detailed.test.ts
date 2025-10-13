@@ -410,4 +410,64 @@ describe("generateDetailedMarkdownFailedOnly", () => {
     expect(md).toContain("at TestClass.test(TestClass.java:10)");
     expect(md).toContain("**Groups:** smoke");
   });
+
+  it("shows no failures message when all tests pass", () => {
+    const suites: TestNGSuiteResult[] = [
+      {
+        suiteName: "s1",
+        durationMs: 100,
+        testCases: [
+          {
+            name: "passedTest1",
+            className: "pkg1.A",
+            durationMs: 10,
+            status: "PASS",
+          },
+          {
+            name: "passedTest2",
+            className: "pkg1.B",
+            durationMs: 10,
+            status: "PASS",
+          },
+        ],
+      },
+    ];
+    const md = generateDetailedMarkdownFailedOnly(suites);
+    expect(md).toContain(
+      "Only failed test details are displayed due to GitHub size restrictions",
+    );
+    expect(md).toContain("No tests have failed");
+    expect(md).not.toContain("passedTest1");
+    expect(md).not.toContain("passedTest2");
+  });
+
+  it("shows no failures message when all tests are skipped", () => {
+    const suites: TestNGSuiteResult[] = [
+      {
+        suiteName: "s1",
+        durationMs: 100,
+        testCases: [
+          {
+            name: "skippedTest1",
+            className: "pkg1.A",
+            durationMs: 10,
+            status: "SKIP",
+          },
+          {
+            name: "skippedTest2",
+            className: "pkg1.B",
+            durationMs: 10,
+            status: "SKIP",
+          },
+        ],
+      },
+    ];
+    const md = generateDetailedMarkdownFailedOnly(suites);
+    expect(md).toContain(
+      "Only failed test details are displayed due to GitHub size restrictions",
+    );
+    expect(md).toContain("No tests have failed");
+    expect(md).not.toContain("skippedTest1");
+    expect(md).not.toContain("skippedTest2");
+  });
 });

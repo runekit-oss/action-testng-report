@@ -227,6 +227,17 @@ export function generateDetailedMarkdownFailedOnly(
 
   const packageGroups = groupTestsByPackageAndClass(suites);
 
+  // Check if there are any failed tests at all
+  const totalFailures = Array.from(packageGroups.values()).reduce(
+    (sum, pkg) => sum + pkg.failed,
+    0,
+  );
+
+  if (totalFailures === 0) {
+    md += `✅ **No tests have failed.**\n\n`;
+    return md;
+  }
+
   // Sort packages by most failed first
   const sortedPackages = Array.from(packageGroups.entries()).sort((a, b) => {
     if (b[1].failed !== a[1].failed) {
